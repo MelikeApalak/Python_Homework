@@ -187,3 +187,36 @@ df = df_.copy()
 
 rfm_new = create_rfm(df,csv=True)
 
+### CUSTOMER LIFETIME VALUE
+
+# 1. VERİ HAZIRLAMA
+
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+pd.set_option('display.max_columns',20)
+#pd.set_option('display.max_rows',20)
+pd.set_option('display.float_format', lambda x : '%.5f' % x)
+
+df_ = pd.read_excel("C:/Users/MSI/Downloads/crm_analytics-220908-141436/crm_analytics/datasets/online_retail_II.xlsx",sheet_name="Year 2009-2010")
+df = df_.copy()
+df.head()
+df.shape
+df.isnull().sum()
+
+#gözlem birimindeki invoice değişkeninde c varsa iptal edilen ürün demektir.
+# başında c olan ürünleri silmemiz gerekir.
+
+df = df[~df["Invoice"].str.contains("C",na=False)]
+df.describe().T
+
+df = df[(df["Quantity"] > 0)]
+#customerID deki eksik değerleri yok ediyoruz.
+df.dropna(inplace=True)
+
+df["TotalPrice"] = df["Quantity"] * df["Price"]
+
+cltv_c = df.groupby('Customer ID').agg({'Invoice': lambda x: x.nunique(),
+                                        'Quantity':lambda x : x.sum(),
+                                        'TotalPrice': lambda x : x.sum()})
+
+cltv_c.columns = ['total_transaction','total_unit','total_price']
